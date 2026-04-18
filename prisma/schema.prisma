@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String?
+  password       String
+  createdAt      DateTime        @default(now())
+  homes          Home[]
+  completionLogs CompletionLog[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Home {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  type      String
+  address   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaces    Space[]
+}
+
+model Space {
+  id        String   @id @default(cuid())
+  homeId    String
+  name      String
+  type      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  home      Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  items     Item[]
+  tasks     Task[]
+}
+
+model ItemTemplate {
+  id            String         @id @default(cuid())
+  name          String
+  category      String
+  icon          String?
+  taskTemplates TaskTemplate[]
+  items         Item[]
+}
+
+model TaskTemplate {
+  id                String        @id @default(cuid())
+  itemTemplateId    String?
+  spaceType         String?
+  name              String
+  category          String
+  defaultCycleUnit  String
+  defaultCycleEvery Int           @default(1)
+  estimatedMinutes  Int?
+  guideSteps        String?
+  productTips       String?
+  itemTemplate      ItemTemplate? @relation(fields: [itemTemplateId], references: [id])
+  tasks             Task[]
+}
+
+model Item {
+  id               String        @id @default(cuid())
+  spaceId          String
+  templateId       String?
+  name             String
+  category         String
+  lastCleanedAt    DateTime?
+  lastMaintainedAt DateTime?
+  purchaseDate     DateTime?
+  createdAt        DateTime      @default(now())
+  space            Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  template         ItemTemplate? @relation(fields: [templateId], references: [id])
+  tasks            Task[]
+}
+
+model Task {
+  id              String          @id @default(cuid())
+  itemId          String?
+  spaceId         String
+  homeId          String
+  userId          String
+  templateId      String?
+  name            String
+  category        String
+  status          String          @default("PENDING")
+  cycleUnit       String
+  cycleEvery      Int             @default(1)
+  cycleOverridden Boolean         @default(false)
+  dueDate         DateTime
+  completedAt     DateTime?
+  snoozedUntil    DateTime?
+  createdAt       DateTime        @default(now())
+  item            Item?           @relation(fields: [itemId], references: [id])
+  space           Space           @relation(fields: [spaceId], references: [id])
+  template        TaskTemplate?   @relation(fields: [templateId], references: [id])
+  completionLogs  CompletionLog[]
+}
+
+model CompletionLog {
+  id               String   @id @default(cuid())
+  taskId           String
+  userId           String
+  completedAt      DateTime @default(now())
+  scheduledDueDate DateTime
+  daysEarlyOrLate  Int
+  cycleUnitAtTime  String
+  cycleEveryAtTime Int
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id])
+}
