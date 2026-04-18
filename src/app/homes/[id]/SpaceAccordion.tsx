@@ -10,6 +10,7 @@ interface Task {
   dueDate: Date | string;
   cycleUnit: string;
   cycleEvery: number;
+  category: string;
   itemId: string | null;
   template: {
     defaultCycleUnit: string;
