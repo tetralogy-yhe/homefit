@@ -101,7 +101,7 @@ export default function OnboardingPage() {
     setSpaceItems(init);
   }
 
-  function toggleItem(key: string, item: { name: string; templateId: string; category: string }) {
+  function toggleItem(key: string, item: { name: string; templateId: string | null; category: string }) {
     setSpaceItems((prev) => {
       const current = prev[key] ?? [];
       const exists = current.some((i) => i.name === item.name);
